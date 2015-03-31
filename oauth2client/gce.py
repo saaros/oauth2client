@@ -63,6 +63,8 @@ class AppAssertionCredentials(AssertionCredentials):
 
   @classmethod
   def from_json(cls, json_data):
+    if isinstance(json_data, bytes):
+      json_data = json_data.decode('utf-8')
     data = json.loads(json_data)
     return AppAssertionCredentials(data['scope'])
 
@@ -81,6 +83,8 @@ class AppAssertionCredentials(AssertionCredentials):
     query = '?scope=%s' % urllib.parse.quote(self.scope, '')
     uri = META.replace('{?scope}', query)
     response, content = http_request(uri)
+    if isinstance(content, bytes):
+      content = content.decode('utf-8')
     if response.status == 200:
       try:
         d = json.loads(content)

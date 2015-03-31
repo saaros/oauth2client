@@ -272,7 +272,7 @@ class Credentials(object):
       An instance of the subclass of Credentials that was serialized with
       to_json().
     """
-    if six.PY3 and isinstance(s, bytes):
+    if isinstance(s, bytes):
       s = s.decode('utf-8')
     data = json.loads(s)
     # Find and call the right classmethod from_json() to restore the object.
@@ -612,7 +612,7 @@ class OAuth2Credentials(Credentials):
     Returns:
       An instance of a Credentials subclass.
     """
-    if six.PY3 and isinstance(s, bytes):
+    if isinstance(s, bytes):
       s = s.decode('utf-8')
     data = json.loads(s)
     if (data.get('token_expiry') and
@@ -780,7 +780,7 @@ class OAuth2Credentials(Credentials):
     logger.info('Refreshing access_token')
     resp, content = http_request(
         self.token_uri, method='POST', body=body, headers=headers)
-    if six.PY3 and isinstance(content, bytes):
+    if isinstance(content, bytes):
       content = content.decode('utf-8')
     if resp.status == 200:
       d = json.loads(content)
@@ -840,6 +840,8 @@ class OAuth2Credentials(Credentials):
     query_params = {'token': token}
     token_revoke_uri = _update_query_params(self.revoke_uri, query_params)
     resp, content = http_request(token_revoke_uri)
+    if isinstance(content, bytes):
+      content = content.decode('utf-8')
     if resp.status == 200:
       self.invalid = True
     else:
@@ -907,7 +909,7 @@ class AccessTokenCredentials(OAuth2Credentials):
 
   @classmethod
   def from_json(cls, s):
-    if six.PY3 and isinstance(s, bytes):
+    if isinstance(s, bytes):
       s = s.decode('utf-8')
     data = json.loads(s)
     retval = AccessTokenCredentials(
@@ -1494,6 +1496,8 @@ class SignedJwtAssertionCredentials(AssertionCredentials):
 
   @classmethod
   def from_json(cls, s):
+    if isinstance(s, bytes):
+      s = s.decode('utf-8')
     data = json.loads(s)
     retval = SignedJwtAssertionCredentials(
         data['service_account_name'],
@@ -1558,8 +1562,10 @@ def verify_id_token(id_token, audience, http=None,
 
   resp, content = http.request(cert_uri)
 
+  if isinstance(content, bytes):
+    content = content.decode('utf-8')
   if resp.status == 200:
-    certs = json.loads(content.decode('utf-8'))
+    certs = json.loads(content)
     return crypt.verify_signed_jwt_with_certs(id_token, certs, audience)
   else:
     raise VerifyJwtTokenError('Status code: %d' % resp.status)
@@ -1610,12 +1616,13 @@ def _parse_exchange_token_response(content):
     i.e. {}. That basically indicates a failure.
   """
   resp = {}
+  if isinstance(content, bytes):
+    content = content.decode('utf-8')
   try:
-    resp = json.loads(content.decode('utf-8'))
+    resp = json.loads(content)
   except Exception:
     # different JSON libs raise different exceptions,
     # so we just do a catch-all here
-    content = content.decode('utf-8')
     resp = dict(urllib.parse.parse_qsl(content))
 
   # some providers respond with 'expires', others with 'expires_in'
@@ -1871,6 +1878,8 @@ class OAuth2WebServerFlow(Flow):
 
     resp, content = http.request(self.device_uri, method='POST', body=body,
                                  headers=headers)
+    if isinstance(content, bytes):
+      content = content.decode('utf-8')
     if resp.status == 200:
       try:
         flow_info = json.loads(content)

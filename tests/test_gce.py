@@ -50,6 +50,23 @@ class AssertionCredentialsTests(unittest.TestCase):
         'default/acquire'
         '?scope=http%3A%2F%2Fexample.com%2Fa%20http%3A%2F%2Fexample.com%2Fb')
 
+  def test_good_refresh_bytes(self):
+    http = mock.MagicMock()
+    http.request = mock.MagicMock(
+        return_value=(mock.Mock(status=200),
+                      b'{"accessToken": "this-is-a-token"}'))
+
+    c = AppAssertionCredentials(scope=['http://example.com/a',
+                                       'http://example.com/b'])
+    self.assertEquals(None, c.access_token)
+    c.refresh(http)
+    self.assertEquals('this-is-a-token', c.access_token)
+
+    http.request.assert_called_once_with(
+        'http://metadata.google.internal/0.1/meta-data/service-accounts/'
+        'default/acquire'
+        '?scope=http%3A%2F%2Fexample.com%2Fa%20http%3A%2F%2Fexample.com%2Fb')
+
   def test_fail_refresh(self):
     http = mock.MagicMock()
     http.request = mock.MagicMock(return_value=(mock.Mock(status=400), '{}'))

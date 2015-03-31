@@ -381,7 +381,9 @@ def verify_signed_jwt_with_certs(jwt, certs, audience):
   # Parse token.
   json_body = _urlsafe_b64decode(segments[1])
   try:
-    parsed = json.loads(json_body.decode('utf-8'))
+    if isinstance(json_body, bytes):
+      json_body = json_body.decode('utf-8')
+    parsed = json.loads(json_body)
   except:
     raise AppIdentityError('Can\'t parse token: %s' % json_body)
 
